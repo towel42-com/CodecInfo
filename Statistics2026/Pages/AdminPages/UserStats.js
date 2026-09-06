@@ -20,7 +20,7 @@
         });
 
         view.querySelector("#selectUser").addEventListener(`change`, function () {
-            const user = this.options[this.selectedIndex].value;
+            const user = this.options[this.selectedIndex].innerHTML;
             loadStats(view, user);
         });
 

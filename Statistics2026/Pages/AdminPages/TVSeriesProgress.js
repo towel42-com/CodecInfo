@@ -22,12 +22,12 @@
             ref.parentNode.insertBefore(style, ref);
 
             const selectElement = document.getElementById("selectUser");
-            const user = selectElement.options[selectElement.selectedIndex].value;
+            const user = selectElement.options[selectElement.selectedIndex].innerHTML;
             loadData(view, user)
 
             function process_click() {
                 const selectElement = document.getElementById("selectUser");
-                const user = selectElement.options[selectElement.selectedIndex].value;
+                const user = selectElement.options[selectElement.selectedIndex].innerHTML;
                 loadData(view, user)
             }
         });
@@ -41,7 +41,7 @@
         });
 
         view.querySelector("#selectUser").addEventListener(`change`, function () {
-            const user = this.options[this.selectedIndex].text;
+            const user = this.options[this.selectedIndex].innerHTML;
             loadData(view, user);
         });
 
