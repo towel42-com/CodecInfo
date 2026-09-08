@@ -32,7 +32,7 @@ define(function () {
 
             view.querySelector("#UserTitle").innerHTML = "TV Series Progress for " + userName;
 
-            var url = "Statistics2026/tv_series_progress/" + userName;
+            var url = "Statistics2026/tv_series_progress/" + userName + "?serverId=" + config.ServerId;
             loadTableData(view, 'TVSeriesProgressStatus', 'TVSeriesProgressTable_results', url, getTVProgressRowData, showLoadingFunc, hideLoadingFunc, Helpers);
         });
     }
@@ -183,46 +183,52 @@ define(function () {
         row_html += "<td style='align='left'>" + info.Codec + "</td>";
         row_html += "<td style='align='left'>" + info.DolbyVisionProfile + "</td>";
         row_html += "<td style='align='left'>" + info.ServerLocation + "</td>";
-        row_html += "<td style='align='right'>" + info.Count + "</td>";
         return row_html;
     }
 
     function loadTableData(view, statusElementId, resultsElementId, apiEndpoint, getRowDataFunc, showLoadingFunc, hideLoadingFunc, Helpers) {
-        var url = ApiClient.getUrl(apiEndpoint);
+        ApiClient.getPluginConfiguration(Helpers.pluginId).then(function (config) {
+            if (!Helpers.CheckForValidConfig(config)) {
+                hideLoadingFunc();
+                return;
+            }
+            var url = ApiClient.getUrl(apiEndpoint + "?serverId=" + config.ServerId);
 
-        var load_status = view.querySelector('#' + statusElementId);
-        load_status.innerHTML = "Loading Data...";
 
-        showLoadingFunc();
+            var load_status = view.querySelector('#' + statusElementId);
+            load_status.innerHTML = "Loading Data...";
 
-        Helpers.getStatistics2026Data(url).then(function (resultData) {
-            load_status.innerHTML = "&nbsp;";
-            console.log("resultData: " + JSON.stringify(resultData));
+            showLoadingFunc();
 
-            var table_body = view.querySelector('#' + resultsElementId);
-            var row_html = "";
+            Helpers.getStatistics2026Data(url).then(function (resultData) {
+                load_status.innerHTML = "&nbsp;";
+                console.log("resultData: " + JSON.stringify(resultData));
 
-            for (var index = 0; index < resultData.length; ++index) {
-                var info = resultData[index];
+                var table_body = view.querySelector('#' + resultsElementId);
+                var row_html = "";
 
-                var row_bg_col = "#BBBBBB00";
-                if (index % 2 == 0) {
-                    row_bg_col = "#BBBBBB1C";
+                for (var index = 0; index < resultData.length; ++index) {
+                    var info = resultData[index];
+
+                    var row_bg_col = "#BBBBBB00";
+                    if (index % 2 == 0) {
+                        row_bg_col = "#BBBBBB1C";
+                    }
+
+                    row_html += "<tr style='background:" + row_bg_col + ";'>";
+
+                    row_html += getRowDataFunc(info);
+
+                    row_html += "</tr>";
                 }
 
-                row_html += "<tr style='background:" + row_bg_col + ";'>";
-
-                row_html += getRowDataFunc(info);
-
-                row_html += "</tr>";
-            }
-
-            table_body.innerHTML = row_html;
-            hideLoadingFunc();
-        },
-            function (response) {
-                load_status.innerHTML = response.status + ":" + response.statusText;
-            });
+                table_body.innerHTML = row_html;
+                hideLoadingFunc();
+            },
+                function (response) {
+                    load_status.innerHTML = response.status + ":" + response.statusText;
+                });
+        });
     }
 
     return {

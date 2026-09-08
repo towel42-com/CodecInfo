@@ -18,7 +18,8 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetEpisodeList : IReturn<List<MediaItemResponse>>
     {
-
+        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
+        public string serverId { get; set; } = String.Empty;
     }
 
     // http://localhost:8096/emby/Statistics2026/movie_list
@@ -26,7 +27,8 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetMovieList : IReturn<List<MediaItemResponse>>
     {
-
+        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
+        public string serverId { get; set; } = String.Empty;
     }
 
     // http://localhost:8096/emby/Statistics2026/tv_series_progress/{User}
@@ -34,6 +36,9 @@ namespace Statistics2026.Api
     public class GetTVSeriesProgress : IReturn<List<GetTVSeriesProgressResponse>>
     {
         public string user { get; set; } = String.Empty;
+
+        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
+        public string serverId { get; set; } = String.Empty;
     }
 
     [Route("/Statistics2026/codec_summary", "GET", Summary = "Gets Codec Summary for Library")]

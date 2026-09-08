@@ -39,57 +39,41 @@ namespace Statistics2026.Api
                 var user = GetUser(userName);
                 if (user == null)
                     return new object();
+                var serverId = request.serverId ?? "";
 
-                var retVal = db.GetTVSeriesProgress(user);
+                var retVal = db.GetTVSeriesProgress(user, serverId);
                 return retVal;
             });
         }
 
         public object Get(GetEpisodeList request)
         {
-            return GetRequest("GetEpisodeList", timer =>
+            var retVal = GetRequest("GetEpisodeList", timer =>
             {
-                var retVal = GetVideos<Episode>(null);
+                var db = StatisticsDB.GetInstance(_embyManagers);
+                var serverId = request.serverId ?? "";
+                var episodes = db.GetEpisodeList(serverId);
 
-                if (retVal == null)
+                if (episodes == null)
                     return new object();
 
-                try
-                {
-                    var safeData = retVal.OrderBy(x => x.SortName).ThenBy(x => x.Season).ThenBy(x => x.Episode).Select(x => new MediaItemResponse(x)).ToList();
-                    return safeData;
-                }
-                finally
-                {
-                    foreach (var item in retVal)
-                    {
-                        item?.Dispose();
-                    }
-                }
+                return episodes;
             });
+            return retVal;
         }
 
         public object Get(GetMovieList request)
         {
             return GetRequest("GetMovieList", timer =>
             {
-                var retVal = GetVideos<Movie>(null);
+                var db = StatisticsDB.GetInstance(_embyManagers);
+                var serverId = request.serverId ?? "";
+                var movies = db.GetMovieList(serverId);
 
-                if (retVal == null)
-                    return new List<MediaItemResponse>();
+                if (movies == null)
+                    return new object();
 
-                try
-                {
-                    var safeData = retVal.OrderBy(x => x.SortName).ThenBy(x => x.Season).ThenBy(x => x.Episode).Select(x => new MediaItemResponse(x)).ToList();
-                    return safeData;
-                }
-                finally
-                {
-                    foreach (var item in retVal)
-                    {
-                        item?.Dispose();
-                    }
-                }
+                return movies;
             });
         }
 

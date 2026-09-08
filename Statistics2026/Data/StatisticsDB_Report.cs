@@ -940,7 +940,7 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public List<GetTVSeriesProgressResponse> GetTVSeriesProgress(User? user)
+        public List<GetTVSeriesProgressResponse> GetTVSeriesProgress(User? user, string serverId)
         {
             if (!_dbHelper.isValid())
                 throw new ArgumentNullException("dbHelper");
@@ -956,6 +956,7 @@ namespace Statistics2026.Data
                 ", Series.Rating" +
                 ", Series.Status" +
                 ", Series.ItemId " +
+                ", Series.ImageUrl " +
                 " FROM " +
                 "   Series "
                 ;
@@ -971,15 +972,24 @@ namespace Statistics2026.Data
                 var totalSpecials = row.GetInt(col++);
                 var score = row.GetDouble(col++);
                 var status = row.GetString(col++);
-                var seriesId = row.GetString(col++); // should be true
+                var seriesId = row.GetString(col++); 
+                var imageUrl = row.GetString(col++);
+
                 var curr = new GetTVSeriesProgressResponse()
                 {
                     SeriesId = seriesId,
                     Name = name,
                     PremiereYear = premiereYear,
                     Score = score,
-                    SeriesStatus = status
+                    SeriesStatus = status,
+                    ItemUrl = imageUrl
                 };
+                if ( curr.ItemUrl != null && curr.ItemUrl != "")
+                {
+                    curr.ItemUrl = ItemImageUrl.ItemUrl(seriesId, serverId, curr.ItemUrl, curr.Name);
+                    curr.Name = curr.ItemUrl;
+                }
+
                 curr.Episodes.Total = totalEpisodes;
                 curr.Specials.Total = totalSpecials;
 
@@ -1039,6 +1049,73 @@ namespace Statistics2026.Data
             var retVal = series.Values.ToList();
 
             return retVal;
+        }
+
+        private List<MediaItemResponse> getMediaListResponse(bool episodes, string serverId)
+        {
+            var retVal = new List<MediaItemResponse>();
+
+            var sql = "SELECT ";
+            if (episodes)
+                sql += "  PrimaryName || ' - S' || printf( '%02d', Season ) || 'E' || printf('%02d', Episode) || ' - ' || SecondaryName AS ListDisplayName";
+            else
+                sql += "  PrimaryName AS ListDisplayName";
+
+            sql +=
+                ", StartYear" +
+                ", ResolutionDetail" +
+                ", Codec" +
+                ", DolbyVisionProfile" +
+                ", ServerLocation" +
+                ", ItemId" +
+                ", ImageUrl" +
+                " FROM " +
+                "   Media ";
+            if (episodes)
+                sql += " WHERE IsEpisode ";
+            else
+                sql += " WHERE NOT IsEpisode ";
+
+            sql += " ORDER BY PrimaryName ASC, Season ASC, Episode ASC ";
+            _dbHelper.ExecuteCommand(new SQLCmdDef(sql), statement =>
+            {
+                var row = statement.Current;
+                var col = 0;
+                var curr = new MediaItemResponse()
+                {
+                    ListDisplayName = row.GetString(col++),
+                    StartYear = row.GetString(col++),
+                    ResolutionDetail = row.GetString(col++),
+                    Codec = row.GetString(col++),
+                    DolbyVisionProfile = row.GetString(col++),
+                    ServerLocation = row.GetString(col++)
+                };
+                var itemId = row.GetString(col++);
+                var itemUrl = row.GetString(col++);
+                curr.ItemUrl = ItemImageUrl.ItemUrl(itemId, serverId, itemUrl, curr.ListDisplayName);
+                if ( curr.ItemUrl != null && curr.ItemUrl != "")
+                {
+                    curr.ListDisplayName = curr.ItemUrl;
+                }
+
+                if (curr.Codec != "hevc" && curr.Codec != "av1")
+                    curr.DolbyVisionProfile = String.Empty;
+
+                retVal.Add(curr);
+                return true;
+            });
+
+            return retVal;
+        }
+
+        public List<MediaItemResponse> GetEpisodeList( string serverId)
+        {
+            return getMediaListResponse(true, serverId);
+        }
+
+        public List<MediaItemResponse> GetMovieList( string serverId)
+        {
+            return getMediaListResponse(false, serverId);
         }
     }
 }

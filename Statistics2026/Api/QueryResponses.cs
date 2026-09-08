@@ -9,6 +9,7 @@ namespace Statistics2026.Api
     public class GetTVSeriesProgressResponse
     {
         public string Name { get; set; } = String.Empty;
+        public string ItemUrl { get; set; } = String.Empty;
         public string SeriesId { get; set; } = String.Empty;
         public int PremiereYear { get; set; } = -1;
 
@@ -60,5 +61,6 @@ namespace Statistics2026.Api
         public string Codec { get; set; } = String.Empty;
         public string DolbyVisionProfile { get; set; } = String.Empty;
         public string ServerLocation { get; set; } = String.Empty;
+        public string ItemUrl { get; set; } = String.Empty;
     }
 }
