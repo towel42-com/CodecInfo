@@ -154,15 +154,15 @@ namespace Statistics2026.Data
                 throw new ArgumentNullException("user");
 
             var userTableName = getUserTableName(user);
-            if ( _userMediaTemplate == null )
+            if (_userMediaTemplate == null)
                 throw new Exception($"AddUserWatchData: TableDef for UserMedia_<USER_ID> is null");
 
             var sqlCmds = new List<SQLCmdDef>();
 
             var cmds = _userMediaTemplate.GetSQLCommands(TableDef.EAction.eCreate);
-            for(var ii = 0; ii < cmds.Count(); ++ii )
+            for (var ii = 0; ii < cmds.Count(); ++ii)
             {
-                var sqlCmd = cmds[ ii ].Replace("UserMedia_<USER_ID>", userTableName);
+                var sqlCmd = cmds[ii].Replace("UserMedia_<USER_ID>", userTableName);
                 sqlCmds.Add(new SQLCmdDef(sqlCmd));
             }
 
@@ -198,20 +198,31 @@ namespace Statistics2026.Data
 
             foreach (var video in allVideosForUser)
             {
-                var userData = _embyManagers!._userDataManager.GetUserData(user, video);
-                using (var mediaInfo = new MediaInfo(video))
+                if (video == null)
+                    continue;
+
+                bool isPlayed = video?.Played ?? false;
+                var playCount = video?.PlayCount ?? 0;
+                var lastPlayedDate = video?.LastPlayedDate ?? null;
+                if (!isPlayed)
+                {
+                    playCount = 0;
+                    lastPlayedDate = null;
+                }
+
+                using (var mediaInfo = new MediaInfo(video!))
                 {
                     sqlCmds.Add(new SQLCmdDef(sql, new List<(string name, object? value)>()
                         {
                             ( "@UserId", user.Id.ToString()),
-                            ( "@ItemId", video.Id.ToString()),
+                            ( "@ItemId", video?.Id.ToString() ?? String.Empty),
                             ( "@Name", mediaInfo.PrimaryName),
                             ( "@IsEpisode", mediaInfo.IsEpisode),
                             ( "@NumEpisodes", mediaInfo.NumEpisodes),
                             ( "@IsTVSpecial", mediaInfo.IsTVSpecial),
-                            ( "@IsPlayed", userData?.Played ?? false),
-                            ( "@PlayCount", userData?.PlayCount ?? 0),
-                            ( "@LastPlayedDate", userData?.LastPlayedDate?.Date ?? null ),
+                            ( "@IsPlayed", isPlayed),
+                            ( "@PlayCount", playCount),
+                            ( "@LastPlayedDate", lastPlayedDate ),
                             ( "@SeriesId", mediaInfo.SeriesId)
                         }));
                 }
@@ -290,9 +301,20 @@ namespace Statistics2026.Data
 
             progress.Report(0);
             var sqlCmds = new List<SQLCmdDef>();
+            var existing = new Dictionary<string, bool>();
+
             foreach (var video in videoList)
             {
+                if (video == null)
+                    continue;
+
                 progress.Report(80.0 * (++curr) / count);
+
+                if (existing.ContainsKey(video.Id.ToString()))
+                    continue;
+                existing.Add(video.Id.ToString(), true);
+
+
                 using (var mediaInfo = new MediaInfo(video))
                 {
 
