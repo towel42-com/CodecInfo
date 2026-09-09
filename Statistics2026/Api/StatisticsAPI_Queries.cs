@@ -280,9 +280,6 @@ namespace Statistics2026.Api
         [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string serverId { get; set; } = String.Empty;
 
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
-
         [ApiMember(Name = "numMovies", Description = "Show the top X watched Movies", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
         public int numMovies { get; set; } = 5;
 
@@ -296,11 +293,11 @@ namespace Statistics2026.Api
         [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string serverId { get; set; } = String.Empty;
 
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
-
         [ApiMember(Name = "numMovies", Description = "Show the top X watched Movies", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
         public int numMovies { get; set; } = 5;
+
+        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
+        public bool excludeAdmin { get; set; } = true;
     }
 
     [Route("/Statistics2026/total_time_watched/{User}", "GET", Summary = "Get the Total Time Watched for User")]

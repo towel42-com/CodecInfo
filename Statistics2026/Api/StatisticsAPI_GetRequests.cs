@@ -352,14 +352,14 @@ namespace Statistics2026.Api
                 var db = StatisticsDB.GetInstance(_embyManagers);
                 var serverId = request.serverId ?? "";
                 var numMovies = request.numMovies;
-                var excludeAdmin = request.excludeAdmin;
 
                 var userName = request.user;
                 var user = GetUser(userName);
                 if (user == null)
                     return new object();
 
-                var groupData = db.WatchedMedia(user, false, numMovies, excludeAdmin, false);
+
+                var groupData = db.WatchedMedia(user, false, numMovies, false, false);
                 groupData.ServerId = serverId;
 
                 var vgReponse = groupData.createStat();
