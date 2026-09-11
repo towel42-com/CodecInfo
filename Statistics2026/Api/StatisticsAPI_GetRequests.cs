@@ -318,7 +318,7 @@ namespace Statistics2026.Api
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
 
-                var groupData = db.WatchedMedia(null, true, false);
+                var groupData = db.WatchedMedia(null, true, EMediaType.eMovie);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -337,7 +337,7 @@ namespace Statistics2026.Api
                     return new object();
 
 
-                var groupData = db.WatchedMedia(user, false, false);
+                var groupData = db.WatchedMedia(user, false, EMediaType.eMovie);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -350,7 +350,7 @@ namespace Statistics2026.Api
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
 
-                var groupData = db.WatchedMedia(null, false, false);
+                var groupData = db.WatchedMedia(null, false, EMediaType.eMovie);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -363,7 +363,7 @@ namespace Statistics2026.Api
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
 
-                var groupData = db.WatchedMedia(null, true, true);
+                var groupData = db.WatchedMedia(null, true, EMediaType.eSeries);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -380,7 +380,7 @@ namespace Statistics2026.Api
                 if (user == null)
                     return new object();
 
-                var groupData = db.WatchedMedia(user, false, true);
+                var groupData = db.WatchedMedia(user, false, EMediaType.eSeries);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -393,7 +393,7 @@ namespace Statistics2026.Api
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
 
-                var groupData = db.WatchedMedia(null, false, true);
+                var groupData = db.WatchedMedia(null, false, EMediaType.eSeries);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
