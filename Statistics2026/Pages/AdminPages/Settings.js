@@ -10,6 +10,7 @@
             view.querySelector("#numMostActive").value = config.numMostActiveUsers;
             view.querySelector("#numWatchedShows").value = config.numWatchedShows;
             view.querySelector("#excludeAdmin").checked = config.excludeAdmin;
+            view.querySelector("#resetPlayCount").checked = config.resetPlayCount;
         });
     }
 
@@ -45,6 +46,15 @@
             function () {
                 ApiClient.getPluginConfiguration(Helpers.pluginId).then(function (config) {
                     config.excludeAdmin = view.querySelector("#excludeAdmin").checked;
+                    ApiClient.updatePluginConfiguration(Helpers.pluginId, config);
+                });
+            }
+        );
+
+        view.querySelector("#resetPlayCount").addEventListener("click",
+            function () {
+                ApiClient.getPluginConfiguration(Helpers.pluginId).then(function (config) {
+                    config.resetPlayCount = view.querySelector("#resetPlayCount").checked;
                     ApiClient.updatePluginConfiguration(Helpers.pluginId, config);
                 });
             }
@@ -90,14 +100,23 @@
             function () {
                 Helpers.showInfo("The default is 5, but you can limit how many most active users that are reported", "Number of Most Active Users");
             });
+
         view.querySelector("#numWatchedShowsHelp").addEventListener("click",
             function () {
                 Helpers.showInfo("The default is 5, but you can limit how many Watched TV Shows to report on", "Number of Watched TV Shows");
             });
+
         view.querySelector("#excludeAdminHelp").addEventListener("click",
             function () {
                 Helpers.showInfo("For security reasons, Administrators are not typically viewers of media and likely should be excluded from analysis.", "Exclude Administrators");
             });
+
+        view.querySelector("#resetPlayCountHelp").addEventListener("click",
+            function () {
+                Helpers.showInfo("When computing the user watch data, reset the playcount to the default value (typically 1), and show Administrators as watched for every video. This settings resets to false after the Reset has occured.", "Reset Play Count");
+            });
+
+        
         view.querySelector("#hasConnectUserIDHelp").addEventListener("click",
             function () {
                 Helpers.showInfo("Normally all users are shown, checking this option will display only users with a Connect User ID.", "Show Users with Connect User ID");

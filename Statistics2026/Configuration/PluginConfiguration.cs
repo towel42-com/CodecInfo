@@ -22,6 +22,8 @@ namespace Statistics2026.Configuration
 
         public bool showUnknownDVProfiles { get; set; } = false;
         public bool showAllResolutions { get; set; } = false;
+
+        public bool resetPlayCount { get; set; } = false;
     }
 }
 
