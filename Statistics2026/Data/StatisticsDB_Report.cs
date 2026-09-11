@@ -9,9 +9,16 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using static ServiceStack.Diagnostics;
 
-
 namespace Statistics2026.Data
 {
+    using WatchedMediaValueItemData = (string id, string name, long playCount, long denominator, double playCountPerUser);
+
+    public enum EMediaType
+    {
+        eMovie,
+        eSeries,
+        eEpisode
+    }
 
     public sealed partial class StatisticsDB
     {
@@ -452,27 +459,32 @@ namespace Statistics2026.Data
             public string ItemId { get; set; } = String.Empty;
             public string Name { get; set; } = String.Empty;
             public string ImageUrl { get; set; } = String.Empty;
+            public long PlayCount { get; set; } = 0;
+            public long Denominator { get; set; } = 0;
             public double PlayCountPerUser { get; set; } = 0.0;
+            public EMediaType MediaType { get; set; } = EMediaType.eEpisode;
 
-            public string Title(User? user, bool isMovie)
+            public string Title()
             {
                 string title = Name;
-                if (user != null)
+                if (MediaType == EMediaType.eMovie)
                 {
-                    if (isMovie)
-                    {
-                        title += $" - Watched {PlayCountPerUser:F0} time";
+                    title += $" - Watched {PlayCount} time";
 
-                        if (PlayCountPerUser != 1)
-                            title += "s";
+                    if (PlayCount != 1)
+                        title += "s";
+                }
+                else
+                {
+                    if (Denominator == PlayCount)
+                    {
+                        title += $" - {Denominator} Episodes played 1 time each";
                     }
                     else
                     {
-                        var percentWatched = 100 * PlayCountPerUser;
-                        if (percentWatched > 100)
-                            title += $" - Percent of Episodes Watched: {percentWatched:F0}%";
-                        else
-                            title += $" - Percent of Series Watched: {percentWatched:F2}%";
+                        title += $" - For {Denominator} Episodes, a total of {PlayCount} play";
+                        if (PlayCount != 1)
+                            title += "s";
                     }
                 }
 
@@ -480,7 +492,7 @@ namespace Statistics2026.Data
             }
         }
 
-        public List<WatchedMediaValue> WatchedMediaValues(User? user, bool leastWatched, bool series)
+        public Dictionary<long, List<WatchedMediaValue>> WatchedMediaValues(User? user, bool leastWatched, EMediaType mediaType)
         {
             CheckIsValid();
 
@@ -495,15 +507,19 @@ namespace Statistics2026.Data
                 tableNames = allUserMediaTables();
             }
 
-            var playMap = new Dictionary<string, (string id, string name, double playCountPerUser)>();
+            //using UserInfo = (string Name, int Age);
+
+            var playMap = new Dictionary<string, WatchedMediaValueItemData>();
             foreach (var tableName in tableNames)
             {
                 var sql = String.Empty;
-                if (series)
+                if (mediaType == EMediaType.eSeries)
                 {
                     sql = "SELECT " +
                     $"  Series.ItemId" +
                     $", Series.Name" +
+                    $", SUM(PlayCount) AS PlayCount " +
+                    $", Series.NumEpisodes AS NumEpisodes" +
                     $", ((1.0 * SUM(PlayCount)) / (1.0 * Series.NumEpisodes)) AS PerUser " +
                     $"FROM Series " +
                     $"LEFT OUTER JOIN {tableName} ON Series.ItemId = {tableName}.SeriesId " +
@@ -528,11 +544,13 @@ namespace Statistics2026.Data
                     else
                         sql += "DESC ";
                 }
-                else
+                else if (mediaType == EMediaType.eMovie)
                 {
                     sql = "SELECT " +
                         $"  {tableName}.ItemId" +
                         $", {tableName}.Name" +
+                        $", SUM({tableName}.PlayCount) AS PlayCount " +
+                        $", 1 AS NumEpisodes" +
                         $", (1.0 * SUM({tableName}.PlayCount)) AS PerUser " +
                         $"FROM {tableName} " +
                         $"LEFT OUTER JOIN Users ON {tableName}.UserId = Users.UserId "
@@ -566,21 +584,24 @@ namespace Statistics2026.Data
                 _dbHelper.ExecuteCommand(new SQLCmdDef(sql), statement =>
                 {
                     var row = statement.Current;
-                    var id = row.GetString(0);
-                    var name = row.GetString(1);
-                    var playCountPerUser = row.GetDouble(2);
+                    var col = 0;
+                    var id = row.GetString(col++);
+                    var name = row.GetString(col++);
+                    var playCount = row.GetInt64(col++);
+                    var numEpisodes = row.GetInt64(col++);
+                    var playCountPerUser = row.GetDouble(col++);
                     if (playMap.TryGetValue(id, out var currentValue))
                     {
                         // Safely updates based on the current value
-                        playMap[id] = (id, name, currentValue.playCountPerUser + playCountPerUser);
+                        playMap[id] = (id, name, currentValue.playCount + playCount, currentValue.denominator + numEpisodes, currentValue.playCountPerUser + playCountPerUser);
                     }
                     else
-                        playMap[id] = (id, name, playCountPerUser);
+                        playMap[id] = (id, name, playCount, numEpisodes, playCountPerUser);
                     return true;
                 });
             }
 
-            List<(string id, string name, double playCountPerUser)> asList = new(playMap.Values);
+            List<WatchedMediaValueItemData> asList = new(playMap.Values);
 
             asList.Sort((a, b) =>
             {
@@ -590,39 +611,45 @@ namespace Statistics2026.Data
                     return b.playCountPerUser.CompareTo(a.playCountPerUser);
             });
 
-            var retVal = new List<WatchedMediaValue>();
+            var retVal = new Dictionary<long, List<WatchedMediaValue>>();
 
-            var num = Statistics2026.Plugin.Instance!.Configuration.numWatchedToReport;
+            var numResultsToGet = Statistics2026.Plugin.Instance!.Configuration.numWatchedToReport;
 
-            for (int ii = 0; ii < Math.Min(num, asList.Count); ++ii)
+            for (int ii = 0; (retVal.Count < numResultsToGet) && (ii < asList.Count); ++ii)
             {
-                var id = asList[ii].id;
-                var name = asList[ii].name;
-                var playCountPerUser = asList[ii].playCountPerUser;
-                retVal.Add(new WatchedMediaValue()
+                var curr = asList[ii];
+                if (!retVal.TryGetValue(curr.playCount, out var value))
                 {
-                    ItemId = id,
-                    Name = name,
-                    ImageUrl = ItemImageUrl._ItemImageUrl(id, _embyManagers!._libraryManager),
-                    PlayCountPerUser = playCountPerUser
+                    retVal[curr.playCount] = new List<WatchedMediaValue>();
+                }
+
+                retVal[curr.playCount].Add(new WatchedMediaValue()
+                {
+                    ItemId = curr.id,
+                    Name = curr.name,
+                    ImageUrl = ItemImageUrl._ItemImageUrl(curr.id, _embyManagers!._libraryManager),
+                    PlayCount = curr.playCount,
+                    Denominator = curr.denominator,
+                    PlayCountPerUser = curr.playCountPerUser,
+                    MediaType = mediaType
                 });
             }
 
             return retVal;
         }
 
-        public StatCard WatchedMedia(User? user, bool leastWatched, bool series)
+        public StatCard WatchedMedia(User? user, bool leastWatched, EMediaType mediaType)
         {
-            var watchedMedia = WatchedMediaValues(user, leastWatched, series);
+            var watchedMedia = WatchedMediaValues(user, leastWatched, mediaType);
             var title = String.Empty;
             var help = String.Empty;
 
-            if (series)
+            if ((mediaType == EMediaType.eSeries) || (mediaType == EMediaType.eEpisode))
             {
                 title = leastWatched ? Constants.LeastWatchedShows : Constants.MostWatchedShows;
                 help = leastWatched ? Constants.HelpLeastWatchedShows : Constants.HelpMostWatchedShows;
             }
-            else
+            else if (mediaType == EMediaType.eMovie)
             {
                 title = leastWatched ? Constants.LeastWatchedMovies : Constants.MostWatchedMovies;
                 help = leastWatched ? Constants.HelpLeastWatchedMovies : Constants.HelpMostWatchedMovies;
@@ -630,14 +657,24 @@ namespace Statistics2026.Data
 
             var retVal = new TextBasedStatCard(title, help, EStatCardSize.eMedium);
             retVal.SubTitle = "(Weighted Watched across Users)";
-            retVal.AsNumberedList = true;
-            for (int ii = 0; ii < watchedMedia.Count; ++ii)
+            retVal.ListType = TextBasedStatCard.EListType.eNumberedGroupByKey;
+            foreach (var currList in watchedMedia.OrderBy(x => x.Key))
             {
-                retVal.AddLine($"{watchedMedia[ii].Title(user, !series)}", watchedMedia[ii].ItemId, watchedMedia[ii].ImageUrl);
+                foreach (var curr in currList.Value)
+                {
+                    retVal.AddLine($"{curr.Title()}", curr.ItemId, curr.ImageUrl);
+                    retVal.AddKey(curr.PlayCount.ToString());
+                }
             }
-            if (watchedMedia.IsNullOrEmpty())
+            if (watchedMedia.Count == 0)
             {
-                var name = series ? "TV Shows" : "Movies";
+                string name;
+                if (mediaType == EMediaType.eSeries)
+                    name = "TV Shows";
+                else if (mediaType == EMediaType.eEpisode)
+                    name = "TV Episodes";
+                else // mediaType == EMediaType.eMovies
+                    name = "Movies";
                 retVal.AddLine($"Watch some {name} already!");
             }
 
@@ -916,7 +953,7 @@ namespace Statistics2026.Data
                 help = Constants.HelpLastSeenTVSeries;
             }
             var retVal = new TextBasedStatCard(title, help, EStatCardSize.eMedium);
-            retVal.AsNumberedList = true;
+            retVal.ListType = TextBasedStatCard.EListType.eNumbered;
             retVal.IgnoreLength = true;
             var values = LastSeenValues(user, movies);
 
