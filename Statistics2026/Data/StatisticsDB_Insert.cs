@@ -3,6 +3,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Querying;
+using MediaBrowser.Model.Entities;
 using Statistics2026.Api;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace Statistics2026.Data
 
             var sqlCmds = new List<SQLCmdDef>();
             sqlCmds.Add(new SQLCmdDef("delete from LastUpdateTable"));
-            sqlCmds.Add(new SQLCmdDef("INSERT INTO LastUpdateTable (LastUpdated, BuildDate, Version) values (@LastUpdated, @BuildDate,@Version)",
+            sqlCmds.Add(new SQLCmdDef("INSERT INTO LastUpdateTable (LastUpdated, BuildDate, Version) values (@LastUpdated, @BuildDate, @Version)",
                         new List<(string name, object? value)>()
                         {
                             ("@LastUpdated", _dbHelper.ToDateTimeParamValue(lastUpdate)),
@@ -104,11 +105,18 @@ namespace Statistics2026.Data
                     progress.Report(80.0 * (++curr) / count);
                     using (var userTimer = new AutoTimer($"AnalyzeUserWatchData -     Processed User ({curr} of {count}) - {user.Name}", _embyManagers?._logger))
                     {
-                        sqlCmds.AddRange(AddUserWatchData(user, progress));
+                        sqlCmds.AddRange(AddUserWatchData(user, progress, cancellationToken));
                         cancellationToken.ThrowIfCancellationRequested();
                     }
                 }
                 cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if (Statistics2026.Plugin.Instance != null || Statistics2026.Plugin.Instance!.Configuration != null)
+            {
+                var config = Statistics2026.Plugin.Instance.Configuration;
+                config.resetPlayCount = false;
+                Statistics2026.Plugin.Instance.UpdateConfiguration(config);
             }
 
             using (var timer = new AutoTimer($"    Analyze User Watch Data - Executing Commands", _embyManagers?._logger))
@@ -146,7 +154,213 @@ namespace Statistics2026.Data
             return (watched, watchable);
         }
 
-        private List<SQLCmdDef> AddUserWatchData(User? user, IProgress<double> progress)
+
+        private Dictionary<string, (bool hit, int playCount)> _baseCount = new Dictionary<string, (bool hit, int playCount)>()
+                        {
+                            { "Rocky", ( false, 100 ) },
+                            { "Star Wars", ( false, 200) },
+                            { "The Empire Strikes Back", ( false, 100) },
+                            { "Return of the Jedi", ( false, 100) },
+                            { "Captain America: The First Avenger", ( false, 100) },
+                            { "Captain America: Civil War", ( false, 20) },
+                            { "Avengers: Endgame", ( false, 30) },
+                            { "Top Gun: Maverick", ( false, 30) },
+                            { "Caddyshack", ( false, 30) },
+                            { "Wonder Woman", ( false, 20) },
+                            { "Avengers: Infinity War", ( false, 10) },
+                            { "The Avengers", ( false, 10) },
+                            { "Fight Club", ( false, 10) },
+                            { "Harry Potter and The Sorcerer's Stone", ( false, 10 ) },
+                            { "Harry Potter and The Philosopher's Stone", ( false, 10 ) },
+                            { "Harry Potter and The Chamber of Secrets", ( false, 10 ) },
+                            { "Harry Potter and The Goblet of Fire", ( false, 10 ) },
+                            { "Harry Potter and The Prisoner of Azkaban", ( false, 10 ) },
+                            { "Harry Potter and The Order of the Phoenix", ( false, 10 ) },
+                            { "Harry Potter and The Half-Blood Prince", ( false, 10 ) },
+                            { "Harry Potter and The Deathly Hallows: Part 1", ( false, 10 ) },
+                            { "Harry Potter and The Deathly Hallows: Part 2", ( false, 10 ) },
+                            { "Tropic Thunder", ( false, 8) },
+                            { "Ready Player One", ( false, 5) },
+                            { "Rudy", ( false, 5) },
+                            { "Free Guy", ( false, 4) },
+                            { "Baby Driver", ( false, 3) },
+
+                            { "Reacher", ( false, 2) },
+                            { "Band of Brothers", ( false, 2) },
+                            { "Better Call Saul", ( false, 2) },
+                            { "Entourage", ( false, 2) },
+                            { "Silicon Valley", ( false, 2) },
+                            { "House", ( false, 2) },
+                            { "Mr. Robot", ( false, 2) },
+                            { "Schoolhouse Rock!", ( false, 2) },
+                            { "Seinfeld", ( false, 2) },
+                            { "Sons of Anarchy", ( false, 2) },
+                            { "The Sopranos", ( false, 2) },
+                            { "South Park", ( false, 2) },
+                        };
+        private static bool ResetMapFixed = false;
+
+        private void FixResetMap()
+        {
+            if (ResetMapFixed)
+                return;
+            var tmp = new Dictionary<string, (bool, int)>(_baseCount);
+            _baseCount.Clear();
+            foreach (var curr in tmp)
+            {
+                _baseCount[curr.Key.ToLower()] = curr.Value;
+            }
+            ResetMapFixed = true;
+        }
+
+        private void ValidateResetMapResults()
+        {
+            if (Statistics2026.Plugin.Instance == null || Statistics2026.Plugin.Instance!.Configuration == null)
+                return;
+
+            var config = Statistics2026.Plugin.Instance.Configuration;
+            if (!config.resetPlayCount)
+                return;
+
+            foreach (var curr in _baseCount)
+            {
+                if (curr.Value.hit == false)
+                {
+                    _embyManagers!._logger!.Warn($"Video {curr.Key} not hit for scott");
+                }
+            }
+        }
+
+        private void ResetPlayCount(User user, Video video, CancellationToken cancellationToken, ref bool isPlayed, ref int playCount)
+        {
+            if (Statistics2026.Plugin.Instance == null || Statistics2026.Plugin.Instance!.Configuration == null)
+                return;
+
+            var config = Statistics2026.Plugin.Instance.Configuration;
+            if (!config.resetPlayCount)
+                return;
+
+            FixResetMap();
+
+            bool? newIsPlayed = null;
+            int? newPlayCount = null;
+            DateTimeOffset? newLastPlayedDate = null;
+            bool? newHideFromResume = null;
+            bool? newFavorite = null;
+            bool updateLastPlayedDate = false;
+
+            var userData = _embyManagers!._userDataManager.GetUserData(user, video);
+            if (userData == null)
+                return;
+
+            if (user.Policy.IsAdministrator)
+            {
+                newIsPlayed = true;
+                newPlayCount = 0;
+                newLastPlayedDate = null;
+                updateLastPlayedDate = true;
+                newHideFromResume = true;
+                newFavorite = false;
+            }
+            else if (user.Name == "scott")
+            {
+                var name = video!.Name;
+                var episode = video as Episode;
+                if (episode != null)
+                {
+                    name = episode.Series.Name;
+                }
+
+                if (_baseCount.TryGetValue(name.ToLower(), out var pc))
+                {
+                    newPlayCount = pc.playCount;
+                    _baseCount[name.ToLower()] = (true, pc.playCount);
+                    newFavorite = true;
+                }
+                else
+                {
+                    if (playCount > 0 && !isPlayed)
+                    {
+                        newIsPlayed = true;
+                        newPlayCount = 1;
+                    }
+
+                    newFavorite = false;
+                }
+            }
+            else
+            {
+                if (playCount > 0 && !isPlayed)
+                {
+                    newIsPlayed = true;
+                    newPlayCount = 1;
+                }
+            }
+            if (user.Name == "amy")
+            {
+                var name = video!.Name;
+                var episode = video as Episode;
+                if (episode != null)
+                {
+                    name = episode.Series.Name;
+                }
+
+                if (!isPlayed && playCount > 0)
+                {
+                    newIsPlayed = true;
+                    newPlayCount = playCount;
+                }
+                else if (name.StartsWith("Outlander"))
+                    return;
+            }
+
+            bool update = false;
+            if (newIsPlayed != null && (userData.Played != newIsPlayed.Value))
+            {
+                userData.Played = newIsPlayed.Value;
+                isPlayed = newIsPlayed.Value;
+                update = true;
+            }
+
+            if (newPlayCount != null && (userData.PlayCount != newPlayCount.Value))
+            {
+                userData.PlayCount = newPlayCount.Value;
+                playCount = newPlayCount.Value;
+                update = true;
+            }
+
+            if (updateLastPlayedDate)
+            {
+                var wasIsNull = (userData.LastPlayedDate == null);
+                var nowIsNull = (newLastPlayedDate == null);
+                if (wasIsNull != nowIsNull)
+                {
+                    userData.LastPlayedDate = newLastPlayedDate;
+                    update = true;
+                }
+            }
+
+            if (newHideFromResume != null && (userData.HideFromResume != newHideFromResume.Value))
+            {
+                userData.HideFromResume = newHideFromResume.Value;
+                update = true;
+            }
+
+            if (newFavorite != null && (userData.IsFavorite != newFavorite.Value))
+            {
+                userData.IsFavorite = newFavorite.Value;
+                update = true;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!update)
+                return;
+
+            _embyManagers._userDataManager.SaveUserData(user, video, userData, UserDataSaveReason.Import, cancellationToken);
+        }
+
+        private List<SQLCmdDef> AddUserWatchData(User? user, IProgress<double> progress, CancellationToken cancellationToken)
         {
             CheckIsValid();
 
@@ -201,14 +415,11 @@ namespace Statistics2026.Data
                 if (video == null)
                     continue;
 
-                bool isPlayed = video?.Played ?? false;
-                var playCount = video?.PlayCount ?? 0;
+                var isPlayed = video.Played;
+                var playCount = video.PlayCount;
+
+                ResetPlayCount(user, video, cancellationToken, ref isPlayed, ref playCount);
                 var lastPlayedDate = video?.LastPlayedDate ?? null;
-                if (!isPlayed)
-                {
-                    playCount = 0;
-                    lastPlayedDate = null;
-                }
 
                 using (var mediaInfo = new MediaInfo(video!))
                 {
@@ -222,11 +433,14 @@ namespace Statistics2026.Data
                             ( "@IsTVSpecial", mediaInfo.IsTVSpecial),
                             ( "@IsPlayed", isPlayed),
                             ( "@PlayCount", playCount),
-                            ( "@LastPlayedDate", lastPlayedDate ),
+                            ( "@LastPlayedDate", _dbHelper.ToDateTimeParamValue( lastPlayedDate.HasValue ? lastPlayedDate.Value.DateTime : null )),
                             ( "@SeriesId", mediaInfo.SeriesId)
                         }));
                 }
             }
+
+            if (user.Name == "scott")
+                ValidateResetMapResults();
             return sqlCmds;
         }
 
@@ -424,8 +638,8 @@ namespace Statistics2026.Data
                 ("@RunTimeTicks", mediaInfo.RunTimeTicks),
                 ("@Rating", mediaInfo.Rating),
                 ("@TotalBitrate", mediaInfo.TotalBitrate),
-                ("@PremiereDate", mediaInfo.PremiereDate ),
-                ("@DateAdded", mediaInfo.DateAdded),
+                ("@PremiereDate", _dbHelper.ToDateTimeParamValue( mediaInfo.PremiereDate ) ),
+                ("@DateAdded", _dbHelper.ToDateTimeParamValue( mediaInfo.DateAdded ) ),
             }));
 
             return sqlCmds;
@@ -761,10 +975,10 @@ namespace Statistics2026.Data
                            ("@ItemId", series.Id.ToString()),
                            ("@Name", series.Name),
                            ("@SortName", series.SortName),
-                           ("@PremiereDate", series.PremiereDate.HasValue ? series.PremiereDate.Value.DateTime : null),
+                           ("@PremiereDate", _dbHelper.ToDateTimeParamValue( series.PremiereDate.HasValue ? series.PremiereDate.Value.DateTime : null )),
                            ("@NumEpisodes", numEpisodes),
                            ("@NumSpecials", numSpecials),
-                           ("@DateAdded", series.DateCreated.DateTime),
+                           ("@DateAdded", _dbHelper.ToDateTimeParamValue( series.DateCreated.DateTime )),
                            ("@ImageUrl", ItemImageUrl._ItemImageUrl(series)),
                            ("@FileSize", totalFileSize),
                            ("@RunTimeTicks", totalRuntime),
