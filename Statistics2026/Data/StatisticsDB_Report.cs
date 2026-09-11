@@ -886,9 +886,9 @@ namespace Statistics2026.Data
                ;
 
             var sqlCmd = new SQLCmdDef(sql, new List<(string, object?)>()
-{
-    ( "@UserId", user.Id.ToString())
-});
+            {
+                ( "@UserId", user.Id.ToString())
+            });
 
             var retVal = new List<(string genre, DateTime lastPlayed)>();
             _dbHelper.ExecuteCommand(sqlCmd, statement =>
@@ -896,7 +896,7 @@ namespace Statistics2026.Data
                 var row = statement.Current;
                 var name = row.GetString(0);
                 var date = row.GetString(1);
-                var lastPlayedDate = DateTime.ParseExact(date, "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                var lastPlayedDate = DBHelper.ReadDateTime(date);
                 retVal.Add((name, lastPlayedDate));
                 return true;
             });
@@ -972,7 +972,7 @@ namespace Statistics2026.Data
                 var totalSpecials = row.GetInt(col++);
                 var score = row.GetDouble(col++);
                 var status = row.GetString(col++);
-                var seriesId = row.GetString(col++); 
+                var seriesId = row.GetString(col++);
                 var imageUrl = row.GetString(col++);
 
                 var curr = new GetTVSeriesProgressResponse()
@@ -984,7 +984,7 @@ namespace Statistics2026.Data
                     SeriesStatus = status,
                     ItemUrl = imageUrl
                 };
-                if ( curr.ItemUrl != null && curr.ItemUrl != "")
+                if (curr.ItemUrl != null && curr.ItemUrl != "")
                 {
                     curr.ItemUrl = ItemImageUrl.ItemUrl(seriesId, serverId, curr.ItemUrl, curr.Name);
                     curr.Name = curr.ItemUrl;
@@ -1093,7 +1093,7 @@ namespace Statistics2026.Data
                 var itemId = row.GetString(col++);
                 var itemUrl = row.GetString(col++);
                 curr.ItemUrl = ItemImageUrl.ItemUrl(itemId, serverId, itemUrl, curr.ListDisplayName);
-                if ( curr.ItemUrl != null && curr.ItemUrl != "")
+                if (curr.ItemUrl != null && curr.ItemUrl != "")
                 {
                     curr.ListDisplayName = curr.ItemUrl;
                 }
@@ -1108,12 +1108,12 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public List<MediaItemResponse> GetEpisodeList( string serverId)
+        public List<MediaItemResponse> GetEpisodeList(string serverId)
         {
             return getMediaListResponse(true, serverId);
         }
 
-        public List<MediaItemResponse> GetMovieList( string serverId)
+        public List<MediaItemResponse> GetMovieList(string serverId)
         {
             return getMediaListResponse(false, serverId);
         }

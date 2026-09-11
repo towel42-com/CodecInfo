@@ -47,7 +47,8 @@ namespace Statistics2026.Data
             "yyyyMMddTHHmmssFFFFFFF",
             "yyyy-MM-dd",
             "yyyyMMdd",
-            "yy-MM-dd"
+            "yy-MM-dd",
+            "o"
         };
         private static string _datetimeFormatUtc = _datetimeFormats[5];
         private static string _datetimeFormatLocal = _datetimeFormats[19];
@@ -223,7 +224,7 @@ namespace Statistics2026.Data
             return (kind == DateTimeKind.Utc) ? _datetimeFormatUtc : _datetimeFormatLocal;
         }
 
-        public DateTime ReadDateTime(string dateText)
+        public static DateTime ReadDateTime(string dateText)
         {
             return DateTime.ParseExact(
                 dateText,
@@ -232,16 +233,19 @@ namespace Statistics2026.Data
                 DateTimeStyles.None).ToUniversalTime();
         }
 
-        public string ToDateTimeParamValue(DateTime dateValue)
+        public string? ToDateTimeParamValue(DateTime? dateValue)
         {
+            if (dateValue == null)
+                return null;
+
             var kind = DateTimeKind.Utc;
-            if (dateValue.Kind == DateTimeKind.Unspecified) // if Unspecified force UTC
+            if (dateValue.Value.Kind == DateTimeKind.Unspecified) // if Unspecified force UTC
             {
-                return DateTime.SpecifyKind(dateValue, kind).ToString(GetDateTimeKindFormat(kind), CultureInfo.InvariantCulture);
+                return DateTime.SpecifyKind(dateValue.Value, kind).ToString(GetDateTimeKindFormat(kind), CultureInfo.InvariantCulture);
             }
             else
             {
-                return dateValue.ToString(GetDateTimeKindFormat(dateValue.Kind), CultureInfo.InvariantCulture);
+                return dateValue.Value.ToString(GetDateTimeKindFormat(dateValue.Value.Kind), CultureInfo.InvariantCulture);
             }
         }
 

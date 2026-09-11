@@ -228,7 +228,7 @@ namespace Statistics2026.Api
             throwHandleEpisode();
         }
 
-        public static string validDateClause( string columnName )
+        public static string validDateClause(string columnName)
         {
             return $"{columnName} IS NOT NULL AND {columnName} != '' AND {columnName} != '0001-01-01T00:00:00.0000000'";
         }
@@ -483,14 +483,14 @@ namespace Statistics2026.Api
                 case EStatisticType.OldestPremiereDate:
                 case EStatisticType.LatestPremiereDate:
                     {
-                        var premiereDate = DateTime.ParseExact(sqlResultValue.GetString(index), "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                        var premiereDate = DBHelper.ReadDateTime(sqlResultValue.GetString(index));
                         value = premiereDate.ToShortDateString();
                     }
                     break;
                 case EStatisticType.FirstAdditionToServer:
                 case EStatisticType.LatestAdditionToServer:
                     {
-                        var premiereDate = DateTime.ParseExact(sqlResultValue.GetString(index), "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                        var premiereDate = DBHelper.ReadDateTime(sqlResultValue.GetString(index));
                         value = premiereDate.ToShortDateString();
                     }
                     break;
@@ -519,14 +519,14 @@ namespace Statistics2026.Api
                 case EStatisticType.OldestPremiereDate:
                 case EStatisticType.LatestPremiereDate:
                     {
-                        var premiereDate = DateTime.ParseExact(sqlResultValue.GetString(index), "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                        var premiereDate = DBHelper.ReadDateTime(sqlResultValue.GetString(index));
                         secondValue = TimeSince(premiereDate);
                     }
                     break;
                 case EStatisticType.FirstAdditionToServer:
                 case EStatisticType.LatestAdditionToServer:
                     {
-                        var premiereDate = DateTime.ParseExact(sqlResultValue.GetString(index), "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                        var premiereDate = DBHelper.ReadDateTime(sqlResultValue.GetString(index));
                         secondValue = TimeSince(premiereDate);
                     }
                     break;
