@@ -161,11 +161,16 @@ define(function () {
                 const numA = parseFloat(cellA.replace(/[^0-9.-]+/g, ""));
                 const numB = parseFloat(cellB.replace(/[^0-9.-]+/g, ""));
                 return currentDirection === 'asc' ? numA - numB : numB - numA;
-            } else {
+            } else if ( dataType == 'string' ) {
                 // Text comparison using localeCompare for proper alphabetical ordering
                 return currentDirection === 'asc'
                     ? cellA.localeCompare(cellB)
                     : cellB.localeCompare(cellA);
+            } else { // progress
+                var numA = +cellA.match(/(?<percent>\d+)\%/).groups.percent;
+                var numB = +cellB.match(/(?<percent>\d+)\%/).groups.percent;
+
+                return currentDirection === 'asc' ? numA - numB : numB - numA;
             }
         });
 
