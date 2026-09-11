@@ -11,6 +11,8 @@ using Statistics2026;
 
 namespace Statistics2026.Data
 {
+    using TextValueLine = (string data, string itemId, string url);
+
     public class DynamicButton
     {
         public string id { get; set; } = String.Empty;
@@ -288,20 +290,30 @@ namespace Statistics2026.Data
 
     public class TextBasedStatCard : StatCard
     {
-        public bool AsNumberedList { get; set; } = false;
+        public enum EListType
+        {
+            eUnordered,
+            eNumbered,
+            eNumberedGroupByKey
+        }
+
+        public EListType ListType { get; set; } = EListType.eUnordered;
         public bool IgnoreLength { get; set; } = false;
-        private List<(string data, string itemId, string url)> ValueLines { get; set; }
+        private List<TextValueLine> ValueLines { get; set; }
+        private List<string> KeyValueLines { get; set; }
         public override bool IsEmpty() { return ValueLines == null || ValueLines.Count == 0; }
         public TextBasedStatCard()
             : base()
         {
-            ValueLines = new List<(string, string, string)>();
+            ValueLines = new List<TextValueLine>();
+            KeyValueLines = new List<string>();
         }
 
         public TextBasedStatCard(string title, string? helpText, EStatCardSize size = EStatCardSize.eHalf)
             : base(title, helpText, size)
         {
-            ValueLines = new List<(string, string, string)>();
+            ValueLines = new List<TextValueLine>();
+            KeyValueLines = new List<string>();
         }
 
         private string CheckMaxLength(string value)
@@ -310,6 +322,11 @@ namespace Statistics2026.Data
             //if (IgnoreLength)
             //    return value;
             //return value.Length > 30 ? value.Substring(0, 27) + "..." : value;
+        }
+
+        public void AddKey(string key)
+        {
+            KeyValueLines.Add(key);
         }
 
         public void AddLine(string value)
@@ -324,15 +341,39 @@ namespace Statistics2026.Data
 
         public override string GetDataString(int depth = 0)
         {
+            if (ListType == EListType.eNumberedGroupByKey && (KeyValueLines.Count != ValueLines.Count))
+            {
+                throw new Exception("For grouped numbered lists, keys list must be of equal size to the values list");
+            }
+
+            Dictionary<string, int>? keyCount = null;
+            if (ListType == EListType.eNumberedGroupByKey)
+            {
+                keyCount = new Dictionary<string, int>();
+                foreach (var key in KeyValueLines)
+                {
+                    if (keyCount.TryGetValue(key, out var value))
+                    {
+                        keyCount[key] = value + 1;
+                    }
+                    else
+                        keyCount.Add(key, 1);
+                }
+            }
+
             string retVal = "";
             string style = "";
-            if (AsNumberedList)
+            if (ListType != EListType.eUnordered)
             {
                 style = GetStyleString(EAlignment.eLeft);
                 retVal += StatCardResponse._addToHtml(depth++, $"<ol>");
             }
-            foreach (var valueLine in ValueLines)
+
+            var prevKey = String.Empty;
+            for (var ii = 0; ii < ValueLines.Count; ++ii)
             {
+                var valueLine = ValueLines[ii];
+
                 if (valueLine.data.IsNullOrEmpty())
                     continue;
                 var value = valueLine.data;
@@ -347,13 +388,51 @@ namespace Statistics2026.Data
                 }
                 var html = dataHtml;
 
-                if (AsNumberedList)
+                if (ListType == EListType.eNumberedGroupByKey)
+                {
+                    if (prevKey != KeyValueLines[ii])
+                    {
+                        if (!prevKey.IsNullOrEmpty())
+                        {
+                            if (keyCount!.TryGetValue(prevKey, out int prevCnt))
+                            {
+                                if (prevCnt > 1)
+                                {
+                                    retVal += StatCardResponse._addToHtml(--depth, "</ul>");
+                                    retVal += StatCardResponse._addToHtml(--depth, "</li>");
+                                }
+                            }
+                        }
+
+                        if (keyCount!.TryGetValue(KeyValueLines[ii], out int cnt))
+                        {
+                            if (cnt > 1)
+                            {
+                                retVal += StatCardResponse._addToHtml(depth++, $"<li {style}>");
+                                retVal += StatCardResponse._addToHtml(depth++, "<ul>");
+                            }
+                        }
+                        prevKey = KeyValueLines[ii];
+                    }
+                }
+                if (ListType != EListType.eUnordered)
                 {
                     html = $"<li {style}>" + dataHtml + "</li>";
                 }
                 retVal += StatCardResponse._addToHtml(depth, html);
             }
-            if (AsNumberedList)
+            if (ListType == EListType.eNumberedGroupByKey)
+            {
+                if (keyCount!.TryGetValue(KeyValueLines[KeyValueLines.Count-1], out int cnt))
+                {
+                    if (cnt > 1)
+                    {
+                        retVal += StatCardResponse._addToHtml(--depth, "</ul>");
+                        retVal += StatCardResponse._addToHtml(--depth, "</li>");
+                    }
+                }
+            }
+            if (ListType != EListType.eUnordered)
             {
                 retVal += StatCardResponse._addToHtml(--depth, "<ol>");
             }
