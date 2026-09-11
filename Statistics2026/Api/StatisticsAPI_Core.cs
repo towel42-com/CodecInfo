@@ -95,9 +95,6 @@ namespace Statistics2026.Api
 
             var user = users[0];
 
-            if (user.Policy.IsAdministrator)
-                return user;
-
             return user;
         }
 
