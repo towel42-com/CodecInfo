@@ -54,7 +54,8 @@ namespace Statistics2026.ScheduledTasks
 
         Task IScheduledTask.Execute(CancellationToken cancellationToken, IProgress<double> progress)
         {
-            _managers._logger.Info("Statistics 2026 : Starting Statistics 2026 calculate all task");
+            var taskName = "Analyze All";
+            _managers._logger.Info($"Statistics 2026 : Starting Statistics 2026 {taskName} task");
             // purely for progress reporting
             var now = DateTime.Now;
             if (PluginConfiguration == null)
@@ -109,8 +110,7 @@ namespace Statistics2026.ScheduledTasks
                 _managers._logger.Info($"{task.tableName.PadLeft(maxLen)}: {task.runTime} ms");
             }
             _managers._logger.Info($"=======================================");
-            _managers._logger.Info("Statistics 2026 : Finished Statistics 2026 calculate all task");
-            Plugin.Instance?.SaveConfiguration();
+            _managers._logger.Info($"Statistics 2026 : Finished Statistics 2026 {taskName} task");
 
             db.SetCancellationToken(null);
             return Task.CompletedTask;

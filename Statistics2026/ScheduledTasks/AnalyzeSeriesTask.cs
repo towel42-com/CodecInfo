@@ -53,7 +53,8 @@ namespace Statistics2026.ScheduledTasks
 
         Task IScheduledTask.Execute(CancellationToken cancellationToken, IProgress<double> progress)
         {
-            _managers._logger.Info("Statistics 2026 : Starting Statistics 2026 series task");
+            var taskName = "Analyze Series";
+            _managers._logger.Info($"Statistics 2026 : Starting Statistics 2026 {taskName} task");
             var db = StatisticsDB.GetInstance(_managers);
             db.SetCancellationToken(cancellationToken);
 
@@ -78,9 +79,7 @@ namespace Statistics2026.ScheduledTasks
             _managers._logger.Info($"=======================================");
             _managers._logger.Info($"         Series: {addSeries} ms");
             _managers._logger.Info($"=======================================");
-            _managers._logger.Info("Statistics 2026 : Finished Statistics 2026 series task");
-
-            Plugin.Instance?.SaveConfiguration();
+            _managers._logger.Info($"Statistics 2026 : Finished Statistics 2026 {taskName} task");
 
             db.SetCancellationToken(null);
             return Task.CompletedTask;
