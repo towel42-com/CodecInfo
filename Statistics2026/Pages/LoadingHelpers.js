@@ -32,7 +32,7 @@ define(function () {
 
             view.querySelector("#UserTitle").innerHTML = "TV Series Progress for " + userName;
 
-            var url = "Statistics2026/tv_series_progress/" + userName + "?serverId=" + config.ServerId;
+            var url = "Statistics2026/tv_series_progress/" + userName;
             loadTableData(view, 'TVSeriesProgressStatus', 'TVSeriesProgressTable_results', url, getTVProgressRowData, showLoadingFunc, hideLoadingFunc, Helpers);
         });
     }
@@ -66,7 +66,7 @@ define(function () {
 
             var movieMostWatchedStats = "";
             movieMostWatchedStats += Helpers.getSummaryInfo(view, "last_seen", userName, "?episodes=false", "last_seen_movies");
-            movieMostWatchedStats += Helpers.getSummaryInfo(view, "most_watched_movies", userName, "?serverId=" + config.ServerId + "&numMovies=" + config.numWatchedShows);
+            movieMostWatchedStats += Helpers.getSummaryInfo(view, "most_watched_movies", userName);
             view.querySelector("#movieMostWatchedStats").innerHTML = movieMostWatchedStats;
 
             var showStats = "";
@@ -80,7 +80,7 @@ define(function () {
 
             var seriesMostWatchedStats = "";
             seriesMostWatchedStats += Helpers.getSummaryInfo(view, "last_seen", userName, "?episodes=true", "last_seen_tv");
-            seriesMostWatchedStats += Helpers.getSummaryInfo(view, "most_watched_shows", userName, "?serverId=" + config.ServerId + "&numShows=" + config.numWatchedShows);
+            seriesMostWatchedStats += Helpers.getSummaryInfo(view, "most_watched_shows", userName, "");
             view.querySelector("#seriesMostWatchedStats").innerHTML = seriesMostWatchedStats;
 
             hideLoadingFunc();
@@ -192,7 +192,7 @@ define(function () {
                 hideLoadingFunc();
                 return;
             }
-            var url = ApiClient.getUrl(apiEndpoint + "?serverId=" + config.ServerId);
+            var url = ApiClient.getUrl(apiEndpoint);
 
 
             var load_status = view.querySelector('#' + statusElementId);

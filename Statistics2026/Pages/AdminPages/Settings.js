@@ -8,7 +8,7 @@
             view.querySelector("#showUnknownDVProfiles").checked = config.showUnknownDVProfiles;
             view.querySelector("#showAllResolutions").checked = config.showAllResolutions;
             view.querySelector("#numMostActive").value = config.numMostActiveUsers;
-            view.querySelector("#numWatchedShows").value = config.numWatchedShows;
+            view.querySelector("#numWatchedToReport").value = config.numWatchedToReport;
             view.querySelector("#excludeAdmin").checked = config.excludeAdmin;
             view.querySelector("#resetPlayCount").checked = config.resetPlayCount;
         });
@@ -69,10 +69,10 @@
             }
         );
 
-        view.querySelector("#numWatchedShows").addEventListener("input",
+        view.querySelector("#numWatchedToReport").addEventListener("input",
             function () {
                 ApiClient.getPluginConfiguration(Helpers.pluginId).then(function (config) {
-                    config.numWatchedShows = parseInt(view.querySelector("#numWatchedShows").value) || 5;
+                    config.numWatchedToReport = parseInt(view.querySelector("#numWatchedToReport").value) || 5;
                     ApiClient.updatePluginConfiguration(Helpers.pluginId, config);
                 });
             }
@@ -101,9 +101,9 @@
                 Helpers.showInfo("The default is 5, but you can limit how many most active users that are reported", "Number of Most Active Users");
             });
 
-        view.querySelector("#numWatchedShowsHelp").addEventListener("click",
+        view.querySelector("#numWatchedToReportHelp").addEventListener("click",
             function () {
-                Helpers.showInfo("The default is 5, but you can limit how many Watched TV Shows to report on", "Number of Watched TV Shows");
+                Helpers.showInfo("The default is 5, but you can limit how many Watched Videos to report on", "Number of Watched Videos");
             });
 
         view.querySelector("#excludeAdminHelp").addEventListener("click",

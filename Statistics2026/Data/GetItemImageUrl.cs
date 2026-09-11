@@ -2,7 +2,7 @@
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using System;
-
+using Statistics2026;
 
 namespace Statistics2026.Data
 {
@@ -47,8 +47,13 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public static string ItemUrl(string itemId, string serverId, string itemUrl, string text = "", string height = "105px")
+        public static string ItemUrl(string itemId, string itemUrl, string text = "", string height = "105px")
         {
+            if ((Plugin.Instance == null) || (Plugin.Instance.ServerId == null))
+                throw new ArgumentNullException("Plugin.Instance or Plugin.Instance.ServerId is null.");
+
+            var serverId = Plugin.Instance.ServerId;
+
             return $"<a is=\"emby-linkbutton\" href=\"/item?id={itemId}&serverId={serverId}\"><img src=\"{itemUrl}\" height=\"{height}\"/>{text}</a>";
         }
     }

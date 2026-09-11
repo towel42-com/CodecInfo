@@ -18,8 +18,6 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetEpisodeList : IReturn<List<MediaItemResponse>>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
     }
 
     // http://localhost:8096/emby/Statistics2026/movie_list
@@ -27,8 +25,6 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetMovieList : IReturn<List<MediaItemResponse>>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
     }
 
     // http://localhost:8096/emby/Statistics2026/tv_series_progress/{User}
@@ -37,18 +33,12 @@ namespace Statistics2026.Api
     {
         public string user { get; set; } = String.Empty;
 
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
     }
 
     [Route("/Statistics2026/codec_summary", "GET", Summary = "Gets Codec Summary for Library")]
     [Authenticated(Roles = "admin")]
     public class GetCodecSummary : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-
         [ApiMember(Name = "rootDivName", Description = "Root Division Name", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string rootDivName { get; set; } = String.Empty;
     }
@@ -57,15 +47,8 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetResolutionSummary : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-
         [ApiMember(Name = "rootDivName", Description = "Root Division Name", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string rootDivName { get; set; } = String.Empty;
-
-        [ApiMember(Name = "showAllResolutions", Description = "Show All Resolutions", IsRequired = true, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool showAllResolutions { get; set; }
 
     }
 
@@ -73,40 +56,20 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetDVProfileSummary : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-
         [ApiMember(Name = "rootDivName", Description = "Root Division Name", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string rootDivName { get; set; } = String.Empty;
-
-        [ApiMember(Name = "showUnknownDVProfiles", Description = "Show Unknown Dolby Vision Profile", IsRequired = true, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool showUnknownDVProfiles { get; set; } = false;
     }
 
     [Route("/Statistics2026/user_count", "GET", Summary = "Gets the total User Count")]
     [Authenticated(Roles = "admin")]
     public class GetUserCount : IReturn<Object>
     {
-        [ApiMember(Name = "hasConnectUserID", Description = "Include only if HasConnectUserId = true", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool hasConnectUserID { get; set; } = false;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
     }
 
     [Route("/Statistics2026/most_active_users", "GET", Summary = "Gets the top 5 most active users")]
     [Authenticated(Roles = "admin")]
     public class GetMostActiveUsers : IReturn<Object>
     {
-        [ApiMember(Name = "hasConnectUserID", Description = "Include only if HasConnectUserId = true", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool hasConnectUserID { get; set; } = false;
-
-        [ApiMember(Name = "numUsers", Description = "Show the top X users", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numUsers { get; set; } = 5;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
     }
 
     [Route("/Statistics2026/total_movie_count/{User}", "GET", Summary = "Get the total Movie Count")]
@@ -193,9 +156,6 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetMovie : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
         public StatGen.EStatisticType whichStatistic { get; set; }
     }
 
@@ -203,9 +163,6 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetSeries : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
         public StatGen.EStatisticType whichStatistic { get; set; }
     }
 
@@ -213,37 +170,17 @@ namespace Statistics2026.Api
     [Authenticated(Roles = "admin")]
     public class GetEpisode : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
         public StatGen.EStatisticType whichStatistic { get; set; }
     }
 
     [Route("/Statistics2026/least_watched_shows", "GET", Summary = "Get the List of Least Watched Shows")]
     public class GetLeastWatchedShows : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
-
-        [ApiMember(Name = "numShows", Description = "Show the top X shows", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numShows { get; set; } = 5;
     }
 
     [Route("/Statistics2026/most_watched_shows/{User}", "GET", Summary = "Get the List of Most Watched Shows")]
     public class GetMostWatchedShows : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
-
-        [ApiMember(Name = "numShows", Description = "Show the top X shows", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numShows { get; set; } = 5;
-
         [ApiMember(Name = "User", Description = "The user for whom to retrieve statistics", IsRequired = true, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string user { get; set; } = String.Empty;
     }
@@ -251,38 +188,16 @@ namespace Statistics2026.Api
     [Route("/Statistics2026/most_watched_shows", "GET", Summary = "Get the List of Most Watched Shows")]
     public class GetMostWatchedShowsNoUser : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
-
-        [ApiMember(Name = "numShows", Description = "Show the top X shows", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numShows { get; set; } = 5;
     }
 
     [Route("/Statistics2026/least_watched_movies", "GET", Summary = "Get the List of Least Watched Movies")]
     public class GetLeastWatchedMovies : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
-
-        [ApiMember(Name = "numMovies", Description = "Show the top X watched Movies", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numMovies { get; set; } = 5;
     }
 
     [Route("/Statistics2026/most_watched_movies/{User}", "GET", Summary = "Get the List of Most Watched Movies")]
     public class GetMostWatchedMovies : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-        [ApiMember(Name = "numMovies", Description = "Show the top X watched Movies", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numMovies { get; set; } = 5;
-
         [ApiMember(Name = "user", Description = "The user for whom to retrieve statistics", IsRequired = true, DataType = "string", ParameterType = "query", Verb = "GET")]
         public string user { get; set; } = String.Empty;
     }
@@ -290,14 +205,6 @@ namespace Statistics2026.Api
     [Route("/Statistics2026/most_watched_movies", "GET", Summary = "Get the List of Most Watched Movies")]
     public class GetMostWatchedMoviesNoUser : IReturn<Object>
     {
-        [ApiMember(Name = "serverId", Description = "Server ID", IsRequired = false, DataType = "string", ParameterType = "query", Verb = "GET")]
-        public string serverId { get; set; } = String.Empty;
-
-        [ApiMember(Name = "numMovies", Description = "Show the top X watched Movies", IsRequired = false, DataType = "int", ParameterType = "query", Verb = "GET")]
-        public int numMovies { get; set; } = 5;
-
-        [ApiMember(Name = "excludeAdmin", Description = "Exclude Administrators from analysis", IsRequired = false, DataType = "bool", ParameterType = "query", Verb = "GET")]
-        public bool excludeAdmin { get; set; } = true;
     }
 
     [Route("/Statistics2026/total_time_watched/{User}", "GET", Summary = "Get the Total Time Watched for User")]

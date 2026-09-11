@@ -39,9 +39,8 @@ namespace Statistics2026.Api
                 var user = GetUser(userName);
                 if (user == null)
                     return new object();
-                var serverId = request.serverId ?? "";
 
-                var retVal = db.GetTVSeriesProgress(user, serverId);
+                var retVal = db.GetTVSeriesProgress(user);
                 return retVal;
             });
         }
@@ -51,8 +50,7 @@ namespace Statistics2026.Api
             var retVal = GetRequest("GetEpisodeList", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var episodes = db.GetEpisodeList(serverId);
+                var episodes = db.GetEpisodeList();
 
                 if (episodes == null)
                     return new object();
@@ -67,8 +65,7 @@ namespace Statistics2026.Api
             return GetRequest("GetMovieList", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var movies = db.GetMovieList(serverId);
+                var movies = db.GetMovieList();
 
                 if (movies == null)
                     return new object();
@@ -83,11 +80,9 @@ namespace Statistics2026.Api
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
 
-                var serverId = request.serverId ?? "";
                 var rootDivName = request.rootDivName ?? "";
 
                 var groupData = db.MediaCodecs();
-                groupData.ServerId = serverId;
                 groupData.HtmlDivId = rootDivName;
                 groupData.SortByKey = true;
                 var vgReponse = groupData.createStat();
@@ -101,12 +96,9 @@ namespace Statistics2026.Api
             return GetRequest("GetResolutionSummary", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
                 var rootDivName = request.rootDivName ?? "";
-                var showAllResolutions = request.showAllResolutions;
 
-                var groupData = db.MediaResolutions(showAllResolutions);
-                groupData.ServerId = serverId;
+                var groupData = db.MediaResolutions();
                 groupData.HtmlDivId = rootDivName;
                 groupData.SortByKey = false;
                 var vgReponse = groupData.createStat();
@@ -121,12 +113,9 @@ namespace Statistics2026.Api
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
 
-                var serverId = request.serverId ?? "";
                 var rootDivName = request.rootDivName ?? "";
-                var showUnknownDVProfiles = request.showUnknownDVProfiles;
 
-                var groupData = db.DVProfileInfo(showUnknownDVProfiles);
-                groupData.ServerId = serverId;
+                var groupData = db.DVProfileInfo();
                 groupData.HtmlDivId = rootDivName;
                 groupData.SortByKey = true;
                 var vgReponse = groupData.createStat();
@@ -140,10 +129,8 @@ namespace Statistics2026.Api
             return GetRequest("GetUserCount", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var hasConnectUserID = request.hasConnectUserID;
-                var excludeAdmin = request.excludeAdmin;
 
-                var groupData = db.UserCount(hasConnectUserID, excludeAdmin);
+                var groupData = db.UserCount();
                 var vgReponse = groupData.createStat();
                 return vgReponse;
             });
@@ -154,11 +141,8 @@ namespace Statistics2026.Api
             return GetRequest("GetMostActiveUsers", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var hasConnectUserID = request.hasConnectUserID;
-                var numUsers = request.numUsers;
-                var excludeAdmin = request.excludeAdmin;
 
-                var groupData = db.MostActiveUsers(hasConnectUserID, numUsers, excludeAdmin);
+                var groupData = db.MostActiveUsers();
                 groupData.SortByKey = false;
                 var vgReponse = groupData.createStat();
 
@@ -333,12 +317,8 @@ namespace Statistics2026.Api
             return GetRequest("GetLeastWatchedMovies", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var numMovies = request.numMovies;
-                var excludeAdmin = request.excludeAdmin;
 
-                var groupData = db.WatchedMedia(null, true, numMovies, excludeAdmin, false);
-                groupData.ServerId = serverId;
+                var groupData = db.WatchedMedia(null, true, false);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -350,8 +330,6 @@ namespace Statistics2026.Api
             return GetRequest("GetMostWatchedMovies", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var numMovies = request.numMovies;
 
                 var userName = request.user;
                 var user = GetUser(userName);
@@ -359,8 +337,7 @@ namespace Statistics2026.Api
                     return new object();
 
 
-                var groupData = db.WatchedMedia(user, false, numMovies, false, false);
-                groupData.ServerId = serverId;
+                var groupData = db.WatchedMedia(user, false, false);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -372,12 +349,8 @@ namespace Statistics2026.Api
             return GetRequest("GetMostWatchedMoviesNoUser", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var numMovies = request.numMovies;
-                var excludeAdmin = request.excludeAdmin;
 
-                var groupData = db.WatchedMedia(null, false, numMovies, excludeAdmin, false);
-                groupData.ServerId = serverId;
+                var groupData = db.WatchedMedia(null, false, false);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -389,12 +362,8 @@ namespace Statistics2026.Api
             return GetRequest("GetLeastWatchedShows", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var numShows = request.numShows;
-                var excludeAdmin = request.excludeAdmin;
 
-                var groupData = db.WatchedMedia(null, true, numShows, excludeAdmin, true);
-                groupData.ServerId = serverId;
+                var groupData = db.WatchedMedia(null, true, true);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -406,16 +375,12 @@ namespace Statistics2026.Api
             return GetRequest("GetMostWatchedShows", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var numShows = request.numShows;
-                var excludeAdmin = request.excludeAdmin;
                 var userName = request.user;
                 var user = GetUser(userName);
                 if (user == null)
                     return new object();
 
-                var groupData = db.WatchedMedia(user, false, numShows, excludeAdmin, true);
-                groupData.ServerId = serverId;
+                var groupData = db.WatchedMedia(user, false, true);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -427,12 +392,8 @@ namespace Statistics2026.Api
             return GetRequest("GetMostWatchedShows", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
-                var numShows = request.numShows;
-                var excludeAdmin = request.excludeAdmin;
 
-                var groupData = db.WatchedMedia(null, false, numShows, excludeAdmin, true);
-                groupData.ServerId = serverId;
+                var groupData = db.WatchedMedia(null, false, true);
 
                 var vgReponse = groupData.createStat();
                 return vgReponse;
@@ -559,12 +520,10 @@ namespace Statistics2026.Api
             return GetRequest("GetMovie", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
                 var whichStatistic = request.whichStatistic;
                 timer.Text += $" - {whichStatistic}";
 
                 var groupData = db.StatisticFor(null, whichStatistic, StatGen.EVideoType.Movie);
-                groupData.ServerId = serverId;
                 return groupData.createStat();
             });
         }
@@ -574,12 +533,10 @@ namespace Statistics2026.Api
             return GetRequest("GetSeries", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
                 var whichStatistic = request.whichStatistic;
                 timer.Text += $" - {whichStatistic}";
 
                 var groupData = db.StatisticFor(null, whichStatistic, StatGen.EVideoType.Series);
-                groupData.ServerId = serverId;
                 return groupData.createStat();
             });
         }
@@ -589,12 +546,10 @@ namespace Statistics2026.Api
             return GetRequest("GetEpisode", timer =>
             {
                 var db = StatisticsDB.GetInstance(_embyManagers);
-                var serverId = request.serverId ?? "";
                 var whichStatistic = request.whichStatistic;
                 timer.Text += $" - {whichStatistic}";
 
                 var groupData = db.StatisticFor(null, whichStatistic, StatGen.EVideoType.Episode);
-                groupData.ServerId = serverId;
 
                 return groupData.createStat();
             });

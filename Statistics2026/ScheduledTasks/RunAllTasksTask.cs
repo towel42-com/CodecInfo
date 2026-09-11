@@ -64,7 +64,6 @@ namespace Statistics2026.ScheduledTasks
             PluginConfiguration.LastUpdated = now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
             PluginConfiguration.Version = Plugin.Instance?.Version.ToString(4) ?? "<UNKNOWN>";
             PluginConfiguration.BuildDate = BuildDateInfo.GetBuildDate().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
-            PluginConfiguration.ServerId = _managers._appHost.SystemId;
 
             var db = StatisticsDB.GetInstance(_managers);
             db.SetCancellationToken(cancellationToken);
@@ -112,6 +111,7 @@ namespace Statistics2026.ScheduledTasks
             _managers._logger.Info($"=======================================");
             _managers._logger.Info($"Statistics 2026 : Finished Statistics 2026 {taskName} task");
 
+            Plugin.Instance?.SaveConfiguration(); 
             db.SetCancellationToken(null);
             return Task.CompletedTask;
         }

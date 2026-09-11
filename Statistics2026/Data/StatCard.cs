@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using static Statistics2026.Data.StatCard;
 using static System.Net.Mime.MediaTypeNames;
+using Statistics2026;
 
 namespace Statistics2026.Data
 {
@@ -108,7 +109,6 @@ namespace Statistics2026.Data
         public string ImageUrl { get; set; } = String.Empty;
         public string MediaItemId { get; set; } = String.Empty;
 
-        public string ServerId { get; set; } = String.Empty;
         public string HtmlDivId { get; set; } = String.Empty;
         public bool SortByKey { get; set; } = false;
 
@@ -228,10 +228,10 @@ namespace Statistics2026.Data
         private void addTitle(ref StatCardResponse retVal, int depth)
         {
             string titleClass = string.Empty;
-            var showImage = !ServerId.IsNullOrEmpty() && !ImageUrl.IsNullOrEmpty() && !MediaItemId.IsNullOrEmpty();
+            var showImage = !ImageUrl.IsNullOrEmpty() && !MediaItemId.IsNullOrEmpty();
             if (showImage)
             {
-                var itemUrl = ItemImageUrl.ItemUrl(MediaItemId, ServerId, ImageUrl);
+                var itemUrl = ItemImageUrl.ItemUrl(MediaItemId, ImageUrl);
                 retVal.addToHtml(depth, itemUrl);
                 retVal.addToHtml(depth++, "<div>");
                 titleClass = "statCard-stats-title-left";
@@ -340,10 +340,10 @@ namespace Statistics2026.Data
                     value = CheckMaxLength(value);
                 var dataHtml = $"<div class=\"statCard-stats-number\" {style}>{value}</div>";
 
-                var showImage = !ServerId.IsNullOrEmpty() && !valueLine.url.IsNullOrEmpty() && !valueLine.itemId.IsNullOrEmpty();
+                var showImage = !valueLine.url.IsNullOrEmpty() && !valueLine.itemId.IsNullOrEmpty();
                 if (showImage)
                 {
-                    dataHtml = ItemImageUrl.ItemUrl(valueLine.itemId, ServerId, valueLine.url, dataHtml, "50px");
+                    dataHtml = ItemImageUrl.ItemUrl(valueLine.itemId, valueLine.url, dataHtml, "50px");
                 }
                 var html = dataHtml;
 

@@ -42,6 +42,8 @@ namespace Statistics2026.Api
             _providerManager = providerManager;
             _configManager = configManager;
             _taskManager = taskManager;
+            if ( Plugin.Instance != null ) 
+                Plugin.Instance.ServerId = _appHost.SystemId;
         }
 
         public readonly IFileSystem _fileSystem;

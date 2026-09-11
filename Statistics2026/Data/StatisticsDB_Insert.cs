@@ -19,8 +19,16 @@ namespace Statistics2026.Data
         {
             if (!_dbHelper.isValid())
                 throw new ArgumentNullException("dbHelper");
+
             if (_embyManagers == null)
                 throw new ArgumentNullException("_embyManagers");
+
+            if (Statistics2026.Plugin.Instance == null)
+                throw new ArgumentNullException("Statistics2026.Plugin.Instance");
+
+            if (Statistics2026.Plugin.Instance.Configuration == null)
+                throw new ArgumentNullException("Statistics2026.Plugin.Instance.Configuration");
+
         }
 
         public void UpdateLastUpdated(DateTime lastUpdate, DateTime buildDate, string version)
@@ -112,12 +120,9 @@ namespace Statistics2026.Data
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (Statistics2026.Plugin.Instance != null || Statistics2026.Plugin.Instance!.Configuration != null)
-            {
-                var config = Statistics2026.Plugin.Instance.Configuration;
-                config.resetPlayCount = false;
-                Statistics2026.Plugin.Instance.UpdateConfiguration(config);
-            }
+            var config = Statistics2026.Plugin.Instance!.Configuration;
+            config.resetPlayCount = false;
+            Statistics2026.Plugin.Instance.UpdateConfiguration(config);
 
             using (var timer = new AutoTimer($"    Analyze User Watch Data - Executing Commands", _embyManagers?._logger))
             {
@@ -215,10 +220,7 @@ namespace Statistics2026.Data
 
         private void ValidateResetMapResults()
         {
-            if (Statistics2026.Plugin.Instance == null || Statistics2026.Plugin.Instance!.Configuration == null)
-                return;
-
-            var config = Statistics2026.Plugin.Instance.Configuration;
+            var config = Statistics2026.Plugin.Instance!.Configuration;
             if (!config.resetPlayCount)
                 return;
 

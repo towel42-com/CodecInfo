@@ -139,8 +139,23 @@ namespace Statistics2026
         public override Guid Id => new Guid("23ADB024-F759-438F-B9A7-D5912A75596C");
 
         public static Plugin? Instance { get; private set; } = null;
-
         public static string StaticName = "Statistics 2026";
+
+        private string? _serverId { get; set; } = null;
+
+        public string? ServerId
+        {
+            get
+            {
+                return _serverId;
+            }
+            set
+            {
+                if (_serverId != null)
+                    return;
+                _serverId = value;
+            }
+        } // set when a embyManagers is constructed
 
         public override string Name
         {

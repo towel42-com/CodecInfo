@@ -15,14 +15,13 @@ namespace Statistics2026.Data
 
     public sealed partial class StatisticsDB
     {
-        public StatCard MediaResolutions(bool showAllResolutions)
+        public StatCard MediaResolutions()
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var retVal = new TableBasedStatCard(Constants.MediaResolutions, Constants.HelpMediaResolutions, new List<string> { "Movies", "Episodes" });
 
-            if (showAllResolutions)
+            if (Plugin.Instance!.Configuration.showAllResolutions)
             {
                 retVal.addRow(Constants.HD, new List<int> { 0, 0 });
                 retVal.addRow(Constants._4k, new List<int> { 0, 0 });
@@ -55,8 +54,7 @@ namespace Statistics2026.Data
 
         public StatCard MediaCodecs()
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var retVal = new TableBasedStatCard(Constants.MediaCodecs, Constants.HelpMediaCodecs, new List<string> { "Movies", "Episodes" });
             string sql =
@@ -82,10 +80,9 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public StatCard DVProfileInfo(bool showUnknownDVProfiles)
+        public StatCard DVProfileInfo()
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string sql =
                 "SELECT " +
@@ -94,7 +91,7 @@ namespace Statistics2026.Data
                 "sum(NOT IsEpisode) AS Movies " +
                 "FROM Media ";
 
-            if (!showUnknownDVProfiles)
+            if (!Plugin.Instance!.Configuration.showUnknownDVProfiles)
                 sql += $"WHERE DolbyVisionProfile NOT IN ({string.Join(",", Constants.UnknownDolbyProfiles.Select(p => $"'{p}'"))}) ";
 
             sql += "GROUP BY DolbyVisionProfile " +
@@ -102,7 +99,7 @@ namespace Statistics2026.Data
                    ;
 
             var retVal = new TableBasedStatCard(Constants.DolbyVisionProfiles, Constants.HelpDolbyVisionProfile, new List<string> { "Movies", "Episodes" });
-            if (showUnknownDVProfiles)
+            if (Plugin.Instance!.Configuration.showUnknownDVProfiles)
                 retVal.addRow("Unknown Dolby Profile", new List<int> { 0, 0 });
 
             _dbHelper.ExecuteCommand(new SQLCmdDef(sql), statement =>
@@ -120,8 +117,7 @@ namespace Statistics2026.Data
 
         private string GetSingleValueFromSQL(string sql, List<(string name, object? value)>? parameters = null, Func<long, string>? formatter = null)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var cmd = new SQLCmdDef(sql, parameters);
 
@@ -138,8 +134,7 @@ namespace Statistics2026.Data
 
         private TextBasedStatCard ValueGroupForSingleItem(string title, string? help, string sql, List<(string name, object? value)>? parameters = null, Func<long, string>? formatter = null)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var retVal = new TextBasedStatCard(title, help, EStatCardSize.eSmall);
             var value = GetSingleValueFromSQL(sql, parameters, formatter);
@@ -149,24 +144,22 @@ namespace Statistics2026.Data
 
         private TextBasedStatCard ValueGroupForSingleValue(string title, string? help, Object value)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var retVal = new TextBasedStatCard(title, help, EStatCardSize.eSmall);
             retVal.AddLine(value.ToString());
             return retVal;
         }
 
-        public long NumUsers(bool hasConnectUserID, bool excludeAdmin)
+        public long NumUsers(bool hasConnectUserId, bool excludeAdmin)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string sql = "SELECT COUNT(UserName) FROM Users ";
 
             List<string> conditions = new List<string>();
 
-            if (hasConnectUserID)
+            if (hasConnectUserId)
                 conditions.Add("ConnectUserId <> '' AND ConnectUserId IS NOT NULL");
 
             if (excludeAdmin)
@@ -177,16 +170,22 @@ namespace Statistics2026.Data
             return GetSingleValueFromSQL(sql).ToInt64();
         }
 
-        public StatCard UserCount(bool hasConnectUserID, bool excludeAdmin)
+        public long NumUsers()
         {
-            var numUsers = NumUsers(hasConnectUserID, excludeAdmin);
+            CheckIsValid();
+
+            return NumUsers(Statistics2026.Plugin.Instance!.Configuration.hasConnectUserID, Statistics2026.Plugin.Instance!.Configuration.excludeAdmin);
+        }
+
+        public StatCard UserCount()
+        {
+            var numUsers = NumUsers();
             return ValueGroupForSingleValue(Constants.TotalUsers, null, numUsers);
         }
 
-        public StatCard MostActiveUsers(bool hasConnectUserID, int numUsers, bool excludeAdmin)
+        public StatCard MostActiveUsers()
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string sql =
                 "SELECT " +
@@ -195,14 +194,15 @@ namespace Statistics2026.Data
                 "FROM Users ";
             List<string> conditions = new List<string>();
 
-            if (hasConnectUserID)
+            if (Statistics2026.Plugin.Instance!.Configuration.hasConnectUserID)
                 conditions.Add("ConnectUserId <> '' AND ConnectUserId IS NOT NULL");
 
-            if (excludeAdmin)
+            if (Statistics2026.Plugin.Instance!.Configuration.excludeAdmin)
                 conditions.Add("NOT IsAdministrator");
 
             sql += DBHelper.JoinClauses(conditions);
 
+            var numUsers = Plugin.Instance.Configuration.numMostActiveUsers;
             sql +=
                 "ORDER BY TotalTimeWatched DESC " +
                 $"LIMIT {numUsers} "
@@ -228,8 +228,7 @@ namespace Statistics2026.Data
 
         public StatCard TotalMovieCount(User? user, bool watched)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string sql = "";
             var parameters = new List<(string, object?)>();
@@ -274,8 +273,7 @@ namespace Statistics2026.Data
 
         public StatCard TotalFinishedSeries(User? user)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -317,8 +315,7 @@ namespace Statistics2026.Data
 
         public StatCard TotalTVCount(User? user, bool watched)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string seriesColumn = String.Empty;
             string seriesFrom = String.Empty;
@@ -379,8 +376,7 @@ namespace Statistics2026.Data
 
         public StatCard TotalCollectionCount()
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string sql = "SELECT COUNT( ItemId ) FROM Collections";
 
@@ -389,8 +385,7 @@ namespace Statistics2026.Data
 
         public long TotalStudioCountValue(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             string sql = "SELECT DISTINCT StudioNames FROM Media WHERE ";
             if (movies)
@@ -414,8 +409,7 @@ namespace Statistics2026.Data
 
         public StatCard TotalStudioCount(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var retVal = new TextBasedStatCard(movies ? Constants.TotalStudios : Constants.TotalTVNetworks, movies ? Constants.HelpTotalStudios : Constants.HelpTotalTVNetworks, EStatCardSize.eSmall);
             var value = TotalStudioCountValue(user, movies);
@@ -425,23 +419,21 @@ namespace Statistics2026.Data
 
         public StatCard TotalMovieStudioCount(User? user)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             return TotalStudioCount(user, true);
         }
+
         public StatCard TotalTVStudioCount(User? user)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             return TotalStudioCount(user, false);
         }
 
         public StatCard StatisticFor(User? user, StatGen.EStatisticType whichStatistic, StatGen.EVideoType videoType)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             var statGen = new StatGen(whichStatistic, videoType, _dbHelper);
             return statGen.GetStatCard();
@@ -449,8 +441,8 @@ namespace Statistics2026.Data
 
         public StatGen.StatCardValues StatCardValuesFor(User? user, StatGen.EStatisticType whichStatistic, StatGen.EVideoType videoType)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
+
             var statGen = new StatGen(whichStatistic, videoType, _dbHelper);
             return statGen.GetStatCardValues();
         }
@@ -488,11 +480,11 @@ namespace Statistics2026.Data
             }
         }
 
-        public List<WatchedMediaValue> WatchedMediaValues(User? user, bool leastWatched, int numShows, bool excludeAdmin, bool series)
+        public List<WatchedMediaValue> WatchedMediaValues(User? user, bool leastWatched, bool series)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
+            var excludeAdmin = Statistics2026.Plugin.Instance!.Configuration.excludeAdmin;
             var numUsers = (user == null) ? NumUsers(false, excludeAdmin) : 1;
 
             var tableNames = new List<string>();
@@ -600,7 +592,9 @@ namespace Statistics2026.Data
 
             var retVal = new List<WatchedMediaValue>();
 
-            for (int ii = 0; ii < Math.Min(numShows, asList.Count); ++ii)
+            var num = Statistics2026.Plugin.Instance!.Configuration.numWatchedToReport;
+
+            for (int ii = 0; ii < Math.Min(num, asList.Count); ++ii)
             {
                 var id = asList[ii].id;
                 var name = asList[ii].name;
@@ -617,9 +611,9 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public StatCard WatchedMedia(User? user, bool leastWatched, int numShows, bool excludeAdmin, bool series)
+        public StatCard WatchedMedia(User? user, bool leastWatched, bool series)
         {
-            var watchedMedia = WatchedMediaValues(user, leastWatched, numShows, excludeAdmin, series);
+            var watchedMedia = WatchedMediaValues(user, leastWatched, series);
             var title = String.Empty;
             var help = String.Empty;
 
@@ -652,8 +646,7 @@ namespace Statistics2026.Data
 
         public StatCard TotalTime(User? user, bool? episodesOnly, bool played)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -699,8 +692,7 @@ namespace Statistics2026.Data
 
         public List<(int year, long count)> FavoriteYearValues(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -769,8 +761,7 @@ namespace Statistics2026.Data
 
         public List<(string genre, long count)> FavoriteGenreValues(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -825,8 +816,7 @@ namespace Statistics2026.Data
 
         public StatCard FavoriteGenre(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -856,8 +846,7 @@ namespace Statistics2026.Data
 
         public List<(string name, DateTime lastPlayed)> LastSeenValues(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -906,8 +895,7 @@ namespace Statistics2026.Data
 
         public StatCard LastSeen(User? user, bool movies)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -940,10 +928,9 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public List<GetTVSeriesProgressResponse> GetTVSeriesProgress(User? user, string serverId)
+        public List<GetTVSeriesProgressResponse> GetTVSeriesProgress(User? user)
         {
-            if (!_dbHelper.isValid())
-                throw new ArgumentNullException("dbHelper");
+            CheckIsValid();
 
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -986,7 +973,7 @@ namespace Statistics2026.Data
                 };
                 if (curr.ItemUrl != null && curr.ItemUrl != "")
                 {
-                    curr.ItemUrl = ItemImageUrl.ItemUrl(seriesId, serverId, curr.ItemUrl, curr.Name);
+                    curr.ItemUrl = ItemImageUrl.ItemUrl(seriesId, curr.ItemUrl, curr.Name);
                     curr.Name = curr.ItemUrl;
                 }
 
@@ -1051,7 +1038,7 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        private List<MediaItemResponse> getMediaListResponse(bool episodes, string serverId)
+        private List<MediaItemResponse> getMediaListResponse(bool episodes)
         {
             var retVal = new List<MediaItemResponse>();
 
@@ -1092,7 +1079,7 @@ namespace Statistics2026.Data
                 };
                 var itemId = row.GetString(col++);
                 var itemUrl = row.GetString(col++);
-                curr.ItemUrl = ItemImageUrl.ItemUrl(itemId, serverId, itemUrl, curr.ListDisplayName);
+                curr.ItemUrl = ItemImageUrl.ItemUrl(itemId, itemUrl, curr.ListDisplayName);
                 if (curr.ItemUrl != null && curr.ItemUrl != "")
                 {
                     curr.ListDisplayName = curr.ItemUrl;
@@ -1108,14 +1095,14 @@ namespace Statistics2026.Data
             return retVal;
         }
 
-        public List<MediaItemResponse> GetEpisodeList(string serverId)
+        public List<MediaItemResponse> GetEpisodeList()
         {
-            return getMediaListResponse(true, serverId);
+            return getMediaListResponse(true);
         }
 
-        public List<MediaItemResponse> GetMovieList(string serverId)
+        public List<MediaItemResponse> GetMovieList()
         {
-            return getMediaListResponse(false, serverId);
+            return getMediaListResponse(false);
         }
     }
 }
