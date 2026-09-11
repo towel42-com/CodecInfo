@@ -190,18 +190,18 @@ namespace Statistics2026.Data
                             { "Free Guy", ( false, 4) },
                             { "Baby Driver", ( false, 3) },
 
+                            { "The Sopranos", ( false, 20) },
+                            { "Band of Brothers", ( false, 15) },
+                            { "Sons of Anarchy", ( false, 10) },
+                            { "Seinfeld", ( false, 5) },
+                            { "South Park", ( false, 5) },
+                            { "Better Call Saul", ( false, 5) },
+                            { "Entourage", ( false, 5) },
                             { "Reacher", ( false, 2) },
-                            { "Band of Brothers", ( false, 2) },
-                            { "Better Call Saul", ( false, 2) },
-                            { "Entourage", ( false, 2) },
                             { "Silicon Valley", ( false, 2) },
                             { "House", ( false, 2) },
                             { "Mr. Robot", ( false, 2) },
                             { "Schoolhouse Rock!", ( false, 2) },
-                            { "Seinfeld", ( false, 2) },
-                            { "Sons of Anarchy", ( false, 2) },
-                            { "The Sopranos", ( false, 2) },
-                            { "South Park", ( false, 2) },
                         };
         private static bool ResetMapFixed = false;
 
